@@ -5,23 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verbal Reasoning Test - verbal</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 10px; }
-        .header { text-align: center; margin-bottom: 15px; }
-        .header h1 { font-size: 1.2em; margin: 0 0 5px 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            padding: 2.5rem 2rem;
+            max-width: 720px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.2em; margin: 0 0 5px 0; color: #1a1a1a; }
         .header .progress { color: #666; font-size: 0.9em; margin: 0; }
-        .mode-badge { display: inline-block; background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
+        .mode-badge { display: inline-block; background: #3B82F6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
         .save-status { font-size: 0.8em; color: #28a745; height: 1em; }
-        .question-container { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 8px; }
-        .instructions { background-color: #f5f5f5; padding: 12px; border-radius: 5px; margin-bottom: 12px; font-style: italic; font-size: 0.95em; }
-        .question-text { font-size: 1.1em; margin: 12px 0; }
-        .choices { display: flex; flex-direction: column; gap: 8px; }
-        .choice-label { display: block; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-size: 1em; }
+
+        .instructions {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            color: #1a1a1a;
+        }
+
+        .instructions strong {
+            font-weight: 700;
+        }
+
+        .question-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .question-number {
+            font-size: 2.5rem;
+            line-height: 1;
+            color: #3B82F6;
+            min-width: 2rem;
+            flex-shrink: 0;
+        }
+
+        .question-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .question-string {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.05rem;
+            letter-spacing: 0.01em;
+        }
+
+        .choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2.5rem;
+        }
+
+        .choice {
+            display: inline-flex;
+            gap: 0.35rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .choice-letter {
+            color: #3B82F6;
+        }
+
+        .choice-value {
+            color: #1a1a1a;
+        }
+
+        /* Interactive states */
+        .choice-label.selected .choice-letter { text-decoration: underline; }
+        .choice-label.correct .choice-value { color: #16a34a; font-weight: 700; }
+        .choice-label.incorrect .choice-value { color: #dc2626; text-decoration: line-through; }
+        .choice-label.show-correct .choice-value { color: #16a34a; font-weight: 700; }
+
+        /* Choice label styling for clickable choices */
+        .choice-label {
+            display: inline-flex;
+            gap: 0.35rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            position: relative;
+        }
+
         .choice-label:hover { background-color: #f0f0f0; }
-        .choice-label input { margin-right: 8px; transform: scale(1.2); }
-        .choice-label.correct { background-color: #d4edda; border-color: #28a745; }
-        .choice-label.incorrect { background-color: #f8d7da; border-color: #dc3545; }
-        .choice-label.show-correct { background-color: #d4edda; border-color: #28a745; }
-        .next-hint { text-align: center; color: #666; margin-top: 10px; font-style: italic; font-size: 0.9em; }
+        .choice-label.selected { background-color: #e8f0fe; }
+        .choice-label.show-correct { background-color: #d4edda; }
+        .choice-label.incorrect { background-color: #f8d7da; }
+
+        /* Hide native input but keep it functional */
+        .choice-label input[type="radio"],
+        .choice-label input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .next-hint { color: #666; margin-top: 10px; font-style: italic; font-size: 0.9em; }
+
         .summary { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; }
         .summary h2 { margin: 0 0 10px 0; font-size: 1.2em; }
         .summary .score-display { font-size: 2.5em; font-weight: bold; margin: 10px 0; }
@@ -29,8 +120,8 @@
         .summary table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
         .summary th, .summary td { border: 1px solid #ddd; padding: 6px; text-align: left; }
         .summary th { background-color: #f5f5f5; }
-        button { padding: 12px 24px; font-size: 1em; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
-        button:hover { background-color: #0056b3; }
+        button { padding: 12px 24px; font-size: 1em; background-color: #3B82F6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #2563eb; }
         .continue-btn { background-color: #28a745; }
         .continue-btn:hover { background-color: #218838; }
 
@@ -185,6 +276,20 @@
             return match ? match[2] : choice;
         }
 
+        function formatInstructions(text) {
+            return text
+                .replace(/\bsame\b/g, '<strong>same</strong>')
+                .replace(/\bboth\b/g, '<strong>both</strong>');
+        }
+
+        function parseChoice(choice) {
+            const match = choice.match(/^([A-Z])\s+(.+)$/);
+            if (match) {
+                return { letter: match[1], value: match[2] };
+            }
+            return { letter: null, value: choice };
+        }
+
         function renderQuestion() {
             const q = questions[currentIndex];
             const container = document.getElementById('questionContainer');
@@ -199,42 +304,46 @@
             displayedAt = Date.now();
             selections = [];
 
-            const inputType = isTwoAnswerQuestion(q) ? 'checkbox' : 'radio';
+            const maxSelections = isTwoAnswerQuestion(q) ? 2 : 1;
             const selectionHint = isTwoAnswerQuestion(q) ? '(select 2)' : '';
 
             let choicesHtml = '';
-            q.choices.forEach((choice) => {
-                const letter = getChoiceLetter(choice);
-                const text = getChoiceText(choice);
-                const letterAttr = letter ? `data-letter="${letter}"` : '';
+            q.choices.forEach((choice, idx) => {
+                const { letter, value } = parseChoice(choice);
+                const inputId = `choice-${currentIndex}-${idx}`;
 
                 if (letter) {
                     choicesHtml += `
-                        <label class="choice-label" ${letterAttr}>
-                            <input type="${inputType}" name="choice" value="${letter}">
-                            ${letter}. ${text}
+                        <label class="choice-label" data-letter="${letter}" for="${inputId}">
+                            <input type="${isTwoAnswerQuestion(q) ? 'checkbox' : 'radio'}" id="${inputId}" name="choice" value="${letter}">
+                            <span class="choice-letter">${letter}</span><span class="choice-value">${value}</span>
                         </label>
                     `;
                 } else {
                     choicesHtml += `
                         <label class="choice-label">
-                            <input type="${inputType}" name="choice" value="${choice}">
-                            ${choice}
+                            <input type="${isTwoAnswerQuestion(q) ? 'checkbox' : 'radio'}" id="${inputId}" name="choice" value="${choice}">
+                            <span class="choice-value">${value}</span>
                         </label>
                     `;
                 }
             });
 
             container.innerHTML = `
-                <div class="instructions">${q.instructions}</div>
-                <div class="question-text">${q.question} ${selectionHint}</div>
-                <div class="choices">${choicesHtml}</div>
+                <div class="instructions">${formatInstructions(q.instructions)}</div>
+                <div class="question-card">
+                    <div class="question-number">${q.number}</div>
+                    <div class="question-body">
+                        <div class="question-string">${q.question} ${selectionHint}</div>
+                        <div class="choices" role="group">${choicesHtml}</div>
+                    </div>
+                </div>
                 <div class="next-hint" id="nextHint"></div>
             `;
 
-            const inputs = document.querySelectorAll('input[name="choice"]');
-            inputs.forEach(input => {
-                input.addEventListener('change', handleSelection);
+            const labels = document.querySelectorAll('.choice-label');
+            labels.forEach(label => {
+                label.addEventListener('click', handleSelection);
             });
 
             showingResult = false;
@@ -250,6 +359,17 @@
                 .map(input => input.value);
 
             selections = checked;
+
+            // Update visual selection state
+            const labels = document.querySelectorAll('.choice-label');
+            labels.forEach(label => {
+                const input = label.querySelector('input');
+                if (input && input.checked) {
+                    label.classList.add('selected');
+                } else {
+                    label.classList.remove('selected');
+                }
+            });
 
             const hint = document.getElementById('nextHint');
 
