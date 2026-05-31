@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verbal Reasoning Test - verbal</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 10px; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .header h1 { font-size: 1.2em; margin: 0 0 5px 0; }
+        .header .progress { color: #666; font-size: 0.9em; margin: 0; }
+        .mode-badge { display: inline-block; background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
+        .question-container { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .instructions { background-color: #f5f5f5; padding: 12px; border-radius: 5px; margin-bottom: 12px; font-style: italic; font-size: 0.95em; }
+        .question-text { font-size: 1.1em; margin: 12px 0; }
+        .choices { display: flex; flex-direction: column; gap: 8px; }
+        .choice-label { display: block; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-size: 1em; }
+        .choice-label:hover { background-color: #f0f0f0; }
+        .choice-label input { margin-right: 8px; transform: scale(1.2); }
+        .choice-label.correct { background-color: #d4edda; border-color: #28a745; }
+        .choice-label.incorrect { background-color: #f8d7da; border-color: #dc3545; }
+        .choice-label.show-correct { background-color: #d4edda; border-color: #28a745; }
+        .next-hint { text-align: center; color: #666; margin-top: 10px; font-style: italic; font-size: 0.9em; }
+        .summary { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        .summary h2 { margin: 0 0 10px 0; font-size: 1.2em; }
+        .summary .score-display { font-size: 2.5em; font-weight: bold; margin: 10px 0; }
+        .summary .score-percent { font-size: 1.1em; color: #666; margin-bottom: 10px; }
+        .summary table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        .summary th, .summary td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        .summary th { background-color: #f5f5f5; }
+        button { padding: 12px 24px; font-size: 1em; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #0056b3; }
+        .continue-btn { background-color: #28a745; }
+        .continue-btn:hover { background-color: #218838; }
+
+        /* Confetti */
+        .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 1000; }
+        .confetti-piece { position: absolute; width: 10px; height: 30px; top: -10px; animation: fall 3s linear forwards; }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .streamer { position: absolute; top: 0; width: 5px; height: 100px; animation: streamer-drop 4s ease-out forwards; transform-origin: top center; }
+        @keyframes streamer-drop {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Verbal Reasoning</h1>
+        <div class="progress" id="progress">Loading...</div>
+        <div class="mode-badge" id="modeBadge"></div>
+    </div>
+    <div id="questionContainer"></div>
+    <div class="confetti-container" id="confettiContainer"></div>
+
+    <script>
+        const questions = [
+            {id: "2", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "0", question: "mea [?] able    si [?] op", choices: ["A p", "B n", "C f", "D t", "E C"], answer: "D t"},
+            {id: "3", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "1", question: "dis [?] urt    muc [?] ole", choices: ["A p", "B h", "C e", "D s", "E k"], answer: "B h"},
+            {id: "4", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "2", question: "sof [?] in    bea [?] rap", choices: ["A d", "B a", "C t", "D b", "E w"], answer: "C t"},
+            {id: "5", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "3", question: "ra [?] ain    fo [?] oat", choices: ["A t", "B n", "C g", "D s", "E p"], answer: "C g"},
+            {id: "6", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "4", question: "tra [?] awn    bu [?] ellow", choices: ["A p", "B d", "C b", "D s", "E Y"], answer: "E y"},
+            {id: "7", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "5", question: "ea [?] an    sor [?] une", choices: ["A c", "B Y", "C t", "D d", "E g"], answer: "C t"},
+            {id: "8", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "6", question: "fin [?] itten    ran [?] ite", choices: ["A c", "B m", "C s", "D n", "E k"], answer: "E k"},
+            {id: "9", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "6.5", question: "(3 [6] 9)     (2 [4] 6)     (4 [?] 12)", choices: ["A 3", "B 4", "C 6", "D 8", "E 10"], answer: "D 8"},
+            {id: "10", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "7", question: "(23 [91] 68)     (59 [93] 34)      (67 [?] 19)", choices: ["A 83", "B 84", "C 85", "D 86", "E 87"], answer: "D 86"},
+            {id: "11", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "8", question: "(37 [54] 91)      (48 [34] 82)      (56 [?] 73)", choices: ["A 17", "B 21", "C 34", "D 39", "E 41"], answer: "A 17"},
+            {id: "12", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "9", question: "(48 [37] 26)      (55 [38] 21)      (39 [?] 43)", choices: ["A 29", "B 35", "C 37", "D 38", "E 41"], answer: "E 41"},
+            {id: "13", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "10", question: "(8 [55] 39)      (11 [35] 13)      (14 [?] 21)", choices: ["A 8", "B 35", "C 39", "D 47", "E 49"], answer: "E 49"},
+            {id: "14", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "11", question: "(8 [3] 13)      (7 [6] 15)      (9 [?] 19)", choices: ["A 7", "B 8", "C 9", "D 11", "E 12"], answer: "B 8"},
+            {id: "15", type: "13", instructions: "In these questions, the three numbers in each group are related in the same way. Find the number that completes the last group and mark it on the answer sheet.", number: "12", question: "(27 [55] 29)      (38 [88] 51)      (45 [?] 17)", choices: ["A 59", "B 60", "C 61", "D 62", "E 63"], answer: "C 61"},
+            {id: "16", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "12.5", question: "(out by open)    (bite like side)", choices: ["A out", "B by", "C open", "X bite", "Y like", "Z side"], answer: "A out | Z side"},
+            {id: "17", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "13", question: "(in rain hover)    (coat fell croft)", choices: ["A in", "B rain", "C hover", "X coat", "Y fell", "Z croft"], answer: "B rain | X coat"},
+            {id: "18", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "14", question: "(door bad had)    (lock dock ship)", choices: ["A door", "B bad", "C had", "X lock", "Y dock", "Z ship"], answer: "C had | Y dock"},
+            {id: "19", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "15", question: "(rope hope car)    (sat tie less)", choices: ["A rope", "B hope", "C car", "X sat", "Y tie", "Z less"], answer: "B hope | Z less"},
+            {id: "20", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "16", question: "(in out temp)    (late down slide)", choices: ["A in", "B out", "C temp", "X late", "Y down", "Z slide"], answer: "C temp | X late"},
+            {id: "21", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "17", question: "(ape reap grape)    (pear wine ate)", choices: ["A ape", "B reap", "C grape", "X pear", "Y wine", "Z ate"], answer: "B reap | X pear"},
+            {id: "22", type: "9", instructions: "In these questions, find two words, one from each group, that together make one correctly spelt word, without changing the order of the letters. The word from the first group always comes first. Mark both words on the answer sheet", number: "18", question: "(combine share do)    (state nation red)", choices: ["A combine", "B share", "C do", "X state", "Y nation", "Z red"], answer: "C do | Y nation"},
+            {id: "23", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "18.5", question: "black mouse red green hut", choices: ["A black", "B mouse", "C red", "D green", "E hut"], answer: "B mouse | E hut"},
+            {id: "24", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "19", question: "mug china cup pottery beaker", choices: ["A mug", "B china", "C cup", "D pottery", "E beaker"], answer: "B china | D pottery"},
+            {id: "25", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "20", question: "handle hammer chisel hand saw", choices: ["A handle", "B hammer", "C chisel", "D hand", "E saw"], answer: "A handle | D hand"},
+            {id: "26", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "21", question: "taste sweet touch soft see", choices: ["A taste", "B sweet", "C touch", "D soft", "E see"], answer: "B sweet | D soft"},
+            {id: "27", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "22", question: "river stream pour tip brook", choices: ["A river", "B stream", "C pour", "D tip", "E brook"], answer: "C pour | D tip"},
+            {id: "28", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "23", question: "eyes ears arms nose legs", choices: ["A eyes", "B ears", "C arms", "D nose", "E legs"], answer: "C arms | E legs"},
+            {id: "29", type: "16", instructions: "In these questions, three of the five words are related in some way. Find the two words that do not go with these three and mark them both on the answer sheet.", number: "24", question: "around long tall wide across", choices: ["A around", "B long", "C tall", "D wide", "E across"], answer: "A around | E across"},
+            {id: "30", type: "20", instructions: "Read the following information, then find the correct answer to the question and mark its letter on the answer sheet. If these statements are true, only one of the sentences below must be true. Which one?", number: "25", question: "David, Julie and Lee have to score at least 80% in a test in order to join the Science Club. Julie scored 72%. Both David and Lee scored higher than Julie.", choices: ["A David and Lee passed the test.", "B Julie couldn't join the Science Club.", "C David and Lee couldn't join the Science Club.", "D Lee scored more than David.", "E David scored more than Lee."], answer: "B"},
+            {id: "31", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "25.5", question: "(man [mat] tip)    (bug [?] dew)", choices: ["A bud", "B beg", "C dug", "D bed", "E wed"], answer: "A bud"},
+            {id: "32", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "26", question: "(show [hose] user)    (when [?] cart)", choices: ["A tear", "B hear", "C went", "D race", "E hare"], answer: "B hear"},
+            {id: "33", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "27", question: "(bread [drips] clips)    (heart [?] prams)", choices: ["A tears", "B steam", "C pears", "D meats", "E teams"], answer: "E teams"},
+            {id: "34", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "28", question: "(slide [dial] slave)    (spend [?] prank)", choices: ["A pear", "B nape", "C dear", "D pans", "E near"], answer: "E near"},
+            {id: "35", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "29", question: "(sleep [plume] plums)    (print [?] claim)", choices: ["A trial", "B trail", "C train", "D paint", "E plain"], answer: "C train"},
+            {id: "36", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "30", question: "(spike [kick] clock)    (jeans [?] mouse)", choices: ["A mean", "B name", "C same", "D nose", "E sane"], answer: "B name"},
+            {id: "37", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "31", question: "(split [time] meant)    (thief [?] elbow)", choices: ["A flee", "B blow", "C heel", "D blew", "E feel"], answer: "E feel"}
+        ];
+
+        let results = [];
+        let currentIndex = 0;
+        let displayedAt = null;
+        let answeredAt = null;
+        let showingResult = false;
+        let firstPassComplete = false;
+        let selections = [];
+
+        const SUMMARY_INTERVAL = 6;
+        const twoAnswerTypes = ['9', '16'];
+
+        function isTwoAnswerQuestion(q) {
+            return twoAnswerTypes.includes(q.type);
+        }
+
+        function getCorrectLetters(answerStr) {
+            const letters = [];
+            const parts = answerStr.split('|');
+            parts.forEach(part => {
+                const match = part.trim().match(/^([A-Z])\s*/);
+                if (match) letters.push(match[1]);
+            });
+            return letters;
+        }
+
+        function getChoiceLetter(choice) {
+            const match = choice.match(/^([A-Z])\s+(.+)$/);
+            return match ? match[1] : null;
+        }
+
+        function getChoiceText(choice) {
+            const match = choice.match(/^([A-Z])\s+(.+)$/);
+            return match ? match[2] : choice;
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIndex];
+            const container = document.getElementById('questionContainer');
+            const modeBadge = document.getElementById('modeBadge');
+
+            const qNum = (currentIndex % SUMMARY_INTERVAL) + 1;
+            document.getElementById('progress').textContent = `${qNum}/${SUMMARY_INTERVAL}`;
+
+            modeBadge.textContent = firstPassComplete ? 'Review' : '';
+            modeBadge.style.display = firstPassComplete ? 'inline-block' : 'none';
+
+            displayedAt = Date.now();
+            selections = [];
+
+            const inputType = isTwoAnswerQuestion(q) ? 'checkbox' : 'radio';
+            const selectionHint = isTwoAnswerQuestion(q) ? '(select 2)' : '';
+
+            let choicesHtml = '';
+            q.choices.forEach((choice) => {
+                const letter = getChoiceLetter(choice);
+                const text = getChoiceText(choice);
+                const letterAttr = letter ? `data-letter="${letter}"` : '';
+
+                if (letter) {
+                    choicesHtml += `
+                        <label class="choice-label" ${letterAttr}>
+                            <input type="${inputType}" name="choice" value="${letter}">
+                            ${letter}. ${text}
+                        </label>
+                    `;
+                } else {
+                    choicesHtml += `
+                        <label class="choice-label">
+                            <input type="${inputType}" name="choice" value="${choice}">
+                            ${choice}
+                        </label>
+                    `;
+                }
+            });
+
+            container.innerHTML = `
+                <div class="instructions">${q.instructions}</div>
+                <div class="question-text">${q.question} ${selectionHint}</div>
+                <div class="choices">${choicesHtml}</div>
+                <div class="next-hint" id="nextHint"></div>
+            `;
+
+            const inputs = document.querySelectorAll('input[name="choice"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', handleSelection);
+            });
+
+            showingResult = false;
+        }
+
+        function handleSelection(e) {
+            if (showingResult) return;
+
+            const q = questions[currentIndex];
+            const maxSelections = isTwoAnswerQuestion(q) ? 2 : 1;
+
+            const checked = Array.from(document.querySelectorAll('input[name="choice"]:checked'))
+                .map(input => input.value);
+
+            selections = checked;
+
+            const hint = document.getElementById('nextHint');
+
+            if (checked.length < maxSelections) {
+                hint.textContent = `Pick ${maxSelections - checked.length} more`;
+            } else {
+                hint.textContent = '';
+                setTimeout(() => processAnswer(), 300);
+            }
+        }
+
+        function processAnswer() {
+            if (showingResult) return;
+
+            const q = questions[currentIndex];
+            const correctLetters = getCorrectLetters(q.answer);
+            const maxSelections = isTwoAnswerQuestion(q) ? 2 : 1;
+
+            answeredAt = Date.now();
+
+            const correct = selections.length === correctLetters.length &&
+                selections.every(s => correctLetters.includes(s));
+            results.push({
+                questionId: q.id,
+                displayedAt: displayedAt,
+                answeredAt: answeredAt,
+                selectedAnswer: selections.join(', '),
+                correctAnswer: correctLetters.join(', '),
+                correct: correct
+            });
+
+            const labels = document.querySelectorAll('.choice-label');
+            labels.forEach(label => {
+                const letter = label.dataset.letter;
+                if (correctLetters.includes(letter)) {
+                    label.classList.add('show-correct');
+                }
+                if (selections.includes(letter) && !correctLetters.includes(letter)) {
+                    label.classList.add('incorrect');
+                }
+            });
+
+            showingResult = true;
+            setTimeout(() => advanceQuestion(), 1500);
+        }
+
+        function advanceQuestion() {
+            showingResult = false;
+            currentIndex++;
+
+            // Check if we need to show summary (every 6 questions)
+            if (currentIndex > 0 && currentIndex % SUMMARY_INTERVAL === 0) {
+                showSectionSummary();
+            } else if (currentIndex >= questions.length) {
+                if (firstPassComplete) {
+                    showFinalSummary();
+                } else {
+                    currentIndex = 0;
+                    firstPassComplete = true;
+                    renderQuestion();
+                }
+            } else {
+                renderQuestion();
+            }
+        }
+
+        function showSectionSummary() {
+            const container = document.getElementById('questionContainer');
+            const sectionNum = Math.ceil(currentIndex / SUMMARY_INTERVAL);
+            const sectionResults = results.slice(-SUMMARY_INTERVAL);
+            const correctCount = sectionResults.filter(r => r.correct).length;
+            const percent = Math.round((correctCount / SUMMARY_INTERVAL) * 100);
+            const passed = percent >= 80;
+
+            let resultsTable = `
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th>Ans</th>
+                        <th>OK</th>
+                        <th>Time</th>
+                    </tr>
+            `;
+            sectionResults.forEach((r, idx) => {
+                const timeTaken = ((r.answeredAt - r.displayedAt) / 1000).toFixed(1);
+                const globalIdx = results.length - SUMMARY_INTERVAL + idx + 1;
+                resultsTable += `
+                    <tr>
+                        <td>${globalIdx}</td>
+                        <td>${r.selectedAnswer}</td>
+                        <td>${r.correct ? 'Y' : 'N'}</td>
+                        <td>${timeTaken}s</td>
+                    </tr>
+                `;
+            });
+            resultsTable += '</table>';
+
+            const confettiHtml = passed ? createConfetti() : '';
+
+            container.innerHTML = `
+                ${confettiHtml}
+                <div class="summary">
+                    <h2>Section ${sectionNum}</h2>
+                    <div class="score-display">${correctCount}/${SUMMARY_INTERVAL}</div>
+                    <div class="score-percent">${percent}%</div>
+                    ${resultsTable}
+                    ${passed ? '<p style="color: #28a745; font-weight: bold;">80%+ Great job!</p>' : '<p>Keep practicing!</p>'}
+                    <button class="continue-btn" onclick="continueToNextSection()">Next Section</button>
+                </div>
+            `;
+            document.getElementById('progress').textContent = `Section ${sectionNum} Done`;
+            document.getElementById('modeBadge').style.display = 'none';
+        }
+
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4'];
+            let html = '<div class="confetti-container"><div style="position:absolute;width:100%;height:100%">';
+
+            // Add confetti pieces
+            for (let i = 0; i < 50; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * 100;
+                const delay = Math.random() * 2;
+                const size = Math.random() * 10 + 5;
+                html += `<div class="confetti-piece" style="
+                    left: ${left}%;
+                    background: ${color};
+                    width: ${size}px;
+                    height: ${size * 3}px;
+                    animation-delay: ${delay}s;
+                "></div>`;
+            }
+
+            // Add streamers
+            for (let i = 0; i < 20; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * 100;
+                const delay = Math.random() * 1.5;
+                html += `<div class="streamer" style="
+                    left: ${left}%;
+                    background: linear-gradient(to bottom, ${color}, transparent);
+                    animation-delay: ${delay}s;
+                "></div>`;
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function continueToNextSection() {
+            if (currentIndex >= questions.length) {
+                if (firstPassComplete) {
+                    showFinalSummary();
+                } else {
+                    currentIndex = 0;
+                    firstPassComplete = true;
+                    renderQuestion();
+                }
+            } else {
+                renderQuestion();
+            }
+        }
+
+        function showFinalSummary() {
+            const container = document.getElementById('questionContainer');
+            const correctCount = results.filter(r => r.correct).length;
+            const percent = Math.round((correctCount / results.length) * 100);
+            const passed = percent >= 80;
+
+            let resultsTable = '';
+            if (results.length > 0) {
+                resultsTable = `
+                    <table>
+                        <tr>
+                            <th>#</th>
+                            <th>Ans</th>
+                            <th>OK</th>
+                            <th>Time</th>
+                        </tr>
+                `;
+                results.forEach((r, idx) => {
+                    const timeTaken = ((r.answeredAt - r.displayedAt) / 1000).toFixed(1);
+                    resultsTable += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${r.selectedAnswer}</td>
+                            <td>${r.correct ? 'Y' : 'N'}</td>
+                            <td>${timeTaken}s</td>
+                        </tr>
+                    `;
+                });
+                resultsTable += '</table>';
+            }
+
+            const confettiHtml = passed ? createConfetti() : '';
+
+            container.innerHTML = `
+                ${confettiHtml}
+                <div class="summary">
+                    <h2>Complete!</h2>
+                    <div class="score-display">${correctCount}/${results.length}</div>
+                    <div class="score-percent">${percent}%</div>
+                    ${resultsTable}
+                    ${passed ? '<p style="color: #28a745; font-weight: bold;">80%+ Excellent!</p>' : '<p>Keep practicing!</p>'}
+                    <button onclick="startReview()">Review</button>
+                </div>
+            `;
+            document.getElementById('progress').textContent = 'Done';
+            document.getElementById('modeBadge').style.display = 'none';
+        }
+
+        function startReview() {
+            currentIndex = 0;
+            firstPassComplete = true;
+            showingResult = false;
+            results = [];
+            renderQuestion();
+        }
+
+        renderQuestion();
+    </script>
+</body>
+</html>
