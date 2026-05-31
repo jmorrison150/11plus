@@ -10,6 +10,7 @@
         .header h1 { font-size: 1.2em; margin: 0 0 5px 0; }
         .header .progress { color: #666; font-size: 0.9em; margin: 0; }
         .mode-badge { display: inline-block; background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
+        .save-status { font-size: 0.8em; color: #28a745; height: 1em; }
         .question-container { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 8px; }
         .instructions { background-color: #f5f5f5; padding: 12px; border-radius: 5px; margin-bottom: 12px; font-style: italic; font-size: 0.95em; }
         .question-text { font-size: 1.1em; margin: 12px 0; }
@@ -52,11 +53,73 @@
         <h1>Verbal Reasoning</h1>
         <div class="progress" id="progress">Loading...</div>
         <div class="mode-badge" id="modeBadge"></div>
+        <div class="save-status" id="saveStatus"></div>
     </div>
     <div id="questionContainer"></div>
     <div class="confetti-container" id="confettiContainer"></div>
 
     <script>
+        const STORAGE_KEY = 'verbalQuiz_progress';
+        const SUMMARY_INTERVAL = 6;
+
+        // Load saved state or initialize
+        let savedState = loadState();
+        let results = savedState ? savedState.results : [];
+        let currentIndex = savedState ? savedState.currentIndex : 0;
+        let firstPassComplete = savedState ? savedState.firstPassComplete : false;
+        let displayedAt = null;
+        let answeredAt = null;
+        let showingResult = false;
+        let selections = [];
+
+        function loadState() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.results && typeof parsed.currentIndex === 'number') {
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.log('Failed to load saved state:', e);
+            }
+            return null;
+        }
+
+        function saveState() {
+            const state = {
+                results: results,
+                currentIndex: currentIndex,
+                firstPassComplete: firstPassComplete,
+                lastSaved: Date.now()
+            };
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                showSaveIndicator();
+            } catch (e) {
+                console.log('Failed to save state:', e);
+            }
+        }
+
+        function showSaveIndicator() {
+            const el = document.getElementById('saveStatus');
+            el.textContent = 'Saved';
+            el.style.opacity = '1';
+            setTimeout(() => {
+                el.style.transition = 'opacity 1s';
+                el.style.opacity = '0';
+            }, 1000);
+        }
+
+        function clearSavedState() {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch (e) {
+                console.log('Failed to clear state:', e);
+            }
+        }
+
         const questions = [
             {id: "2", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "0", question: "mea [?] able    si [?] op", choices: ["A p", "B n", "C f", "D t", "E C"], answer: "D t"},
             {id: "3", type: "12", instructions: "In these questions, the same letter must fit into both sets of brackets, to complete the word in front of the brackets and begin the word after the brackets. Find this letter and mark it on the answer sheet.", number: "1", question: "dis [?] urt    muc [?] ole", choices: ["A p", "B h", "C e", "D s", "E k"], answer: "B h"},
@@ -96,15 +159,6 @@
             {id: "37", type: "14", instructions: "In these questions, the three words in the second group should go together in the same way as the three in the first group. Find the word that is missing in the second group and mark it on the answer sheet.", number: "31", question: "(split [time] meant)    (thief [?] elbow)", choices: ["A flee", "B blow", "C heel", "D blew", "E feel"], answer: "E feel"}
         ];
 
-        let results = [];
-        let currentIndex = 0;
-        let displayedAt = null;
-        let answeredAt = null;
-        let showingResult = false;
-        let firstPassComplete = false;
-        let selections = [];
-
-        const SUMMARY_INTERVAL = 6;
         const twoAnswerTypes = ['9', '16'];
 
         function isTwoAnswerQuestion(q) {
@@ -227,6 +281,8 @@
                 correct: correct
             });
 
+            saveState();
+
             const labels = document.querySelectorAll('.choice-label');
             labels.forEach(label => {
                 const letter = label.dataset.letter;
@@ -308,6 +364,7 @@
             `;
             document.getElementById('progress').textContent = `Section ${sectionNum} Done`;
             document.getElementById('modeBadge').style.display = 'none';
+            saveState();
         }
 
         function createConfetti() {
@@ -405,6 +462,7 @@
             `;
             document.getElementById('progress').textContent = 'Done';
             document.getElementById('modeBadge').style.display = 'none';
+            clearSavedState(); // Clean up when test is complete
         }
 
         function startReview() {
@@ -412,10 +470,30 @@
             firstPassComplete = true;
             showingResult = false;
             results = [];
+            clearSavedState();
             renderQuestion();
         }
 
-        renderQuestion();
+        // Start - check if we have saved progress
+        function init() {
+            if (savedState && savedState.results && savedState.results.length > 0) {
+                // Show resume dialog or just continue
+                if (confirm(`Resume from where you left off? (Question ${savedState.currentIndex + 1})`)) {
+                    renderQuestion();
+                } else {
+                    // Start fresh
+                    currentIndex = 0;
+                    results = [];
+                    firstPassComplete = false;
+                    clearSavedState();
+                    renderQuestion();
+                }
+            } else {
+                renderQuestion();
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
